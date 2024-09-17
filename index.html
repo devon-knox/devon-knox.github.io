@@ -17,6 +17,7 @@
             height: 100%;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
         .side-image {
             position: absolute;
@@ -25,6 +26,7 @@
             height: 100%;
             background-size: cover;
             background-position: center;
+            z-index: 1; /* Ensure side images are behind the background image */
         }
         #leftImage {
             left: 0;
@@ -41,6 +43,8 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            position: relative; /* Position relative to stack messages on top */
+            z-index: 2; /* Ensure background image is above side images */
         }
         .message {
             position: absolute;
@@ -54,6 +58,7 @@
             padding: 10px;
             border-radius: 10px;
             background-color: rgba(0, 0, 0, 0.6);
+            width: 100%; /* Ensure messages span the width of the background image */
         }
         #message1 {
             top: 20%;
@@ -62,10 +67,10 @@
             top: 40%;
         }
         #message3 {
-            top: 55%;
+            top: 60%;
         }
         #message4 {
-            top: 70%;
+            top: 80%;
         }
         .link-section {
             position: absolute;
@@ -74,6 +79,7 @@
             transform: translateX(-50%);
             text-align: center;
             display: none;
+            z-index: 3; /* Ensure links are on top */
         }
         .link-section a {
             font-size: 24px;
@@ -101,7 +107,7 @@
         <div id="rightImage" class="side-image"></div>
         
         <div id="link-section" class="link-section">
-            <a href="memory1.html">Early into our relationshup: Tri Kapp My Tie</a><br>
+            <a href="memory1.html">Early into our relationship: Tri Kapp My Tie</a><br>
             <a href="memory2.html">A few months in: Paddle Boarding and Maple View Ice Cream</a><br>
             <a href="memory3.html">Most recent (sort of): Durham Bulls Game</a>
         </div>
