@@ -1,142 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anniversary Message</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap">
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Dancing Script', cursive;
-        }
-        .container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-        }
-        .side-image {
-            position: absolute;
-            top: 0;
-            width: 15%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-        }
-        #leftImage {
-            left: 0;
-            background-image: url('puffle.png'); 
-        }
-        #rightImage {
-            right: 0;
-            background-image: url('flowers.jpg'); 
-        }
-        .background-image {
-            width: 70%; 
-            height: 100%;
-            background-image: url('background.jpg'); 
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .message {
-            text-align: center;
-            font-size: 24px;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            background-color: rgba(0, 0, 0, 0.6);
-            max-width: 80%;
-        }
-        #message1 { color: rgb(24, 181, 220); }
-        #message2 { color: rgb(124, 218, 124); }
-        #message3 { color: rgb(163, 140, 41); }
-        #message4 { color: rgb(220, 157, 235); }
-        .link-section {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .link-section a {
-            font-size: 18px;
-            color: rgb(24, 181, 220);
-            text-decoration: none;
-            margin: 10px;
-            display: inline-block;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy 1 Year Anniversary!</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <div id="leftImage" class="side-image"></div>
-        
-        <div class="background-image">
-            <div id="message1" class="message"></div>
-            <div id="message2" class="message"></div>
-            <div id="message3" class="message"></div>
-            <div id="message4" class="message"></div>
+  <div class="header">
+    <h1>Happy 1 Year Anniversary Ella!</h1>
+    <p class="subtitle">Here's a look back on all our days together. Click on a special day to relive some of our favorite memories! </p>
+  </div>
 
-            <div id="link-section" class="link-section">
-                <a href="memory1.html">Early into our relationship: Tri Kapp My Tie</a><br>
-                <a href="memory2.html">A few months in: Paddle Boarding and Maple View Ice Cream</a><br>
-                <a href="memory3.html">Most recent (sort of): Durham Bulls Game</a>
-            </div>
-        </div>
+  <div id="calendar-wrapper">
+    <div id="calendar-container"></div>
+  </div>
 
-        <div id="rightImage" class="side-image"></div>
-    </div>
-    <script>
-        function typeMessage(message, elementId, delay) {
-            let i = 0;
-            let intervalId = setInterval(function() {
-                if (i < message.length) {
-                    document.getElementById(elementId).innerHTML += message.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(intervalId);
-                }
-            }, delay);
-        }
+  <!-- Fullscreen overlay -->
+  <div id="fullscreen-view" class="hidden">
+    <button id="close-btn">X</button>
+    <div id="fullscreen-img-container"></div>
+    <p id="fullscreen-text"></p>
+  </div>
 
-        window.onload = function() {
-            let messages = [
-                "Happy 6th month anniversary baby!",
-                "I love you so much, and cannot WAIT for the next 6 months,",
-                "and the next year, and the decades to come!",
-                "Here are just a few of my favorite memories with you!"
-            ];
-            let delays = [50, 50, 50, 50]; 
-
-            typeMessage(messages[0], 'message1', delays[0]);
-            setTimeout(function() {
-                typeMessage(messages[1], 'message2', delays[1]);
-            }, messages[0].length * delays[0] + 1000); 
-
-            setTimeout(function() {
-                typeMessage(messages[2], 'message3', delays[2]);
-            }, (messages[0].length * delays[0]) + (messages[1].length * delays[1]) + 2000);  
-
-            setTimeout(function() {
-                typeMessage(messages[3], 'message4', delays[3]);
-            }, (messages[0].length * delays[0]) + (messages[1].length * delays[1]) + (messages[2].length * delays[2]) + 3000);  
-
-            setTimeout(function() {
-                document.getElementById('link-section').style.display = 'block';
-            }, (messages[0].length * delays[0]) + (messages[1].length * delays[1]) + (messages[2].length * delays[2]) + (messages[3].length * delays[3]) + 4000);
-        }
-    </script>
+  <script src="script.js"></script>
 </body>
 </html>
