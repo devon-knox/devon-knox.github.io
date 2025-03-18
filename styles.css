@@ -1,0 +1,170 @@
+body {
+    margin: 0;
+    font-family: Georgia, serif;
+    background: #bffcc6; /* pastel green */
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .header {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  h1 {
+    margin-bottom: 10px;
+    color: #7BAFD4; /* UNC Blue */
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    color: #8b4513; /* Brown */
+  }
+  
+  #calendar-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  #calendar-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 90vw;
+    margin: auto;
+  }
+  
+  .month-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 5px;
+    text-align: center;
+    color: #4B0082; /* Dark purple */
+  }
+  
+  .week-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .week-label {
+    width: 60px;
+    font-weight: bold;
+    text-align: right;
+    padding-right: 10px;
+  }
+  
+  .day-square {
+    width: 60px;
+    height: 60px;
+    background-color: #7BAFD4; /* UNC Blue */
+    border: 1px solid #ccc;
+    cursor: default;
+    font-size: 1rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s, background-color 0.3s;
+    z-index: 1;
+  }
+  
+  .day-square.highlighted {
+    background-color: #8b4513; /* Brown */
+    cursor: pointer;
+    color: white;
+  }
+  
+  .day-square.highlighted:hover {
+    transform: scale(1.2);
+    z-index: 10;
+  }
+  
+  .day-square.highlighted::after {
+    content: attr(data-title);
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #444;
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    display: none;
+    z-index: 999;
+  }
+  
+  .day-square.highlighted:hover::after {
+    display: block;
+  }
+  
+  #fullscreen-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #8b4513;
+    color: #7BAFD4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Start from top for scrolling */
+    z-index: 9999;
+    transform: scale(0);
+    transition: transform 0.5s ease;
+    font-family: Georgia, serif;
+    padding: 20px;
+    overflow-y: auto; /* Enable vertical scroll */
+    box-sizing: border-box;
+  }
+  
+  
+  #fullscreen-view.active {
+    transform: scale(1);
+  }
+  
+  #fullscreen-img-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .fullscreen-img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #3d3208;
+  }
+  
+  #fullscreen-text {
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 0 20px;
+  }
+  
+  #close-btn {
+    position: absolute;
+    top: 30px;
+    right: 45px;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  
+  
