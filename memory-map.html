@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Story — A Map of Us</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c0637a;
+    --gold-light: #e8b4c0;
+    --gold-dim: rgba(192,99,122,0.18);
+    --ink: #1a0f14;
+    --parchment: #fdf0f3;
+    --cream: #fdf6f8;
+    --modal-bg: rgba(18,8,12,0.92);
+
+    --pin-been:  #5ba4cf;   /* carolina blue   — places we've been   */
+    --pin-visit: #7dab6e;   /* matcha green    — want to visit        */
+    --pin-live:  #c4a882;   /* warm light brown — want to live        */
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    font-family: 'EB Garamond', serif;
+    color: var(--parchment);
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 24px 14px;
+    background: linear-gradient(to bottom, rgba(18,8,12,0.97) 60%, transparent);
+    pointer-events: none;
+  }
+  #header .eyebrow {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.8;
+    margin-bottom: 4px;
+  }
+  #header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(22px, 4vw, 36px);
+    letter-spacing: 0.06em;
+    color: var(--parchment);
+    line-height: 1;
+  }
+  #header h1 em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  #header .subtitle {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: rgba(173, 216, 230, 1);
+    margin-top: 5px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── MAP ── */
+  #map {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    filter: saturate(1.1) brightness(1.0);
+    transition: filter 0.4s ease;
+  }
+
+  /* Custom tile layer — dark nautical feel via Leaflet */
+  .leaflet-container {
+    background: #0d0c0a;
+  }
+
+  /* ── PIN STYLES ── */
+  .memory-pin {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .memory-pin:hover { transform: scale(1.18); }
+
+  .pin-outer {
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--pin-color);
+    border: 2.5px solid rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.15), 0 4px 14px rgba(0,0,0,0.45);
+    transition: filter 0.2s, box-shadow 0.2s;
+  }
+  .memory-pin:hover .pin-outer {
+    filter: brightness(1.15);
+    box-shadow: 0 0 0 5px rgba(0,0,0,0.12), 0 6px 20px rgba(0,0,0,0.5);
+  }
+  .pin-inner {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.75);
+    transform: rotate(45deg);
+  }
+
+  /* ── LEGEND ── */
+  #legend {
+    position: fixed;
+    top: 90px; right: 18px;
+    z-index: 1000;
+    background: rgba(26,15,20,0.82);
+    border: 1px solid rgba(192,99,122,0.18);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    padding: 13px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 170px;
+  }
+  #legend .legend-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(253,240,243,0.38);
+    margin-bottom: 2px;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .legend-pin {
+    width: 14px;
+    height: 14px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid rgba(255,255,255,0.5);
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .legend-pin.been  { background: var(--pin-been); }
+  .legend-pin.visit { background: var(--pin-visit); }
+  .legend-pin.live  { background: var(--pin-live); }
+  .legend-label {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 13.5px;
+    color: rgba(253,240,243,0.7);
+    line-height: 1;
+  }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--modal-bg);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    padding: 24px;
+  }
+  #modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  #modal {
+    position: relative;
+    max-width: 560px;
+    width: 100%;
+    background: #141210;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 2px;
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(18px) scale(0.97);
+    transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.08);
+  }
+  #modal-overlay.open #modal {
+    transform: translateY(0) scale(1);
+  }
+
+  #modal-img-wrap {
+    width: 100%;
+    max-height: 420px;
+    min-height: 200px;
+    overflow: hidden;
+    position: relative;
+    background: #0a0908;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal-img-wrap::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, #141210);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* slideshow track */
+  #slide-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    max-height: 420px;
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .slide-img {
+    min-width: 100%;
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;   /* show full photo, no cropping */
+    background: #0a0908;
+  }
+
+  /* arrows */
+  .slide-arrow {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    z-index: 2;
+    width: 34px; height: 34px;
+    background: rgba(20,18,16,0.65);
+    border: 1px solid rgba(253,240,243,0.18);
+    border-radius: 50%;
+    color: rgba(253,240,243,0.8);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+    line-height: 1;
+  }
+  .slide-arrow:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--ink);
+  }
+  .slide-arrow.hidden { display: none; }
+  #slide-prev { left: 10px; }
+  #slide-next { right: 10px; }
+
+  /* dot indicators */
+  #slide-dots {
+    position: absolute;
+    bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 5px;
+  }
+  .slide-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(253,240,243,0.35);
+    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .slide-dot.active {
+    background: var(--gold-light);
+    transform: scale(1.3);
+  }
+
+  /* placeholder when no images */
+  #modal-img-placeholder {
+    display: none;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: rgba(192,99,122,0.3);
+  }
+  #modal-img-placeholder svg { opacity: 0.5; }
+  #modal-img-placeholder span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  #modal-body {
+    padding: 24px 32px 32px;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192,99,122,0.3) transparent;
+  }
+  #modal-body::-webkit-scrollbar { width: 4px; }
+  #modal-body::-webkit-scrollbar-track { background: transparent; }
+  #modal-body::-webkit-scrollbar-thumb { background: rgba(192,99,122,0.3); border-radius: 2px; }
+
+  .modal-location-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .modal-location-tag::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+
+  #modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.1;
+    color: var(--parchment);
+    margin-bottom: 6px;
+  }
+  #modal-date {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: rgba(245,240,232,0.4);
+    margin-bottom: 18px;
+  }
+  #modal-text {
+    font-family: 'EB Garamond', serif;
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: rgba(245,240,232,0.72);
+  }
+
+  .modal-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.35;
+    margin: 18px 0;
+  }
+
+  #modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    width: 32px; height: 32px;
+    background: rgba(10,9,8,0.7);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(245,240,232,0.55);
+    font-size: 16px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    z-index: 10;
+    line-height: 1;
+  }
+  #modal-close:hover {
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold);
+  }
+
+  /* ── COUNTER ── */
+  #counter {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(10,9,8,0.8);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 9px 20px;
+    border-radius: 40px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+  #counter .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.7;
+  }
+  #counter span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: rgba(245,240,232,0.55);
+    text-transform: uppercase;
+  }
+  #counter strong {
+    font-weight: 400;
+    color: var(--gold-light);
+  }
+
+  /* ── LEAFLET OVERRIDES ── */
+  .leaflet-control-zoom {
+    border: 1px solid rgba(201,168,76,0.2) !important;
+    border-radius: 2px !important;
+    overflow: hidden;
+  }
+  .leaflet-control-zoom a {
+    background: rgba(10,9,8,0.85) !important;
+    color: var(--gold-light) !important;
+    border-bottom: 1px solid rgba(201,168,76,0.15) !important;
+    font-size: 16px !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: rgba(201,168,76,0.15) !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(10,9,8,0.6) !important;
+    color: rgba(245,240,232,0.25) !important;
+    font-size: 9px !important;
+  }
+  .leaflet-control-attribution a { color: rgba(201,168,76,0.4) !important; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="eyebrow">Happy Two Years Baby!</div>
+  <h1>Our Love, <em>Mapped</em></h1>
+  <div class="subtitle">I will always cherish the places we go; that's why I decided to give 'em some pins!</div>
+</div>
+
+<div id="map"></div>
+
+<!-- LEGEND -->
+<div id="legend">
+  <div class="legend-title">Our Map</div>
+  <div class="legend-row">
+    <div class="legend-pin been"></div>
+    <span class="legend-label">Places we've been</span>
+  </div>
+  <div class="legend-row">
+    <div class="legend-pin visit"></div>
+    <span class="legend-label">Want to visit together</span>
+  </div>
+  <div class="legend-row">
+    <div class="legend-pin live"></div>
+    <span class="legend-label">Want to live one day</span>
+  </div>
+</div>
+
+<!-- <div id="counter">
+  <div class="dot"></div>
+  <span><strong id="pin-count">0</strong> places we've shared</span>
+  <div class="dot"></div>
+</div> -->
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <button id="modal-close" aria-label="Close">✕</button>
+    <div id="modal-img-wrap">
+      <div id="slide-track"></div>
+      <button class="slide-arrow hidden" id="slide-prev">&#8592;</button>
+      <button class="slide-arrow hidden" id="slide-next">&#8594;</button>
+      <div id="slide-dots"></div>
+      <div id="modal-img-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>No photo added</span>
+      </div>
+    </div>
+    <div id="modal-body">
+      <div class="modal-location-tag" id="modal-location"></div>
+      <h2 id="modal-title"></h2>
+      <div id="modal-date"></div>
+      <div class="modal-divider"></div>
+      <p id="modal-text"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const PIN_COLORS = {
+  been:  getComputedStyle(document.documentElement).getPropertyValue('--pin-been').trim(),
+  visit: getComputedStyle(document.documentElement).getPropertyValue('--pin-visit').trim(),
+  live:  getComputedStyle(document.documentElement).getPropertyValue('--pin-live').trim(),
+};
+
+// ══════════════════════════════════════════════════════════════
+//  YOUR MEMORIES — Edit this array to add/change pins
+//
+//  type options:
+//    "been"  — carolina blue  — places you've been together
+//    "visit" — matcha green   — places you want to visit
+//    "live"  — light brown    — places you want to live
+//
+//  HOW TO ADD A PHOTO:
+//  Place your image file in the images/ folder and set:
+//    photo: "images/filename.jpg"
+//  Leave photo as "" for no image.
+// ══════════════════════════════════════════════════════════════
+const memories = [
+  {
+    lat: 35.80999878140445, lng: -78.70254621865669,
+    type: "been",
+    city: "Raleigh, NC",
+    title: "Lovely Spring Day in Raleigh",
+    date: "March 2nd, 2025",
+    text: "From seeing some crazy exhibits to scarfing down on Eastcut (and then having a 3,000 calorie milkshake), these simple and sweet days together will always be remembered fondly.",
+    photos: ["images/raleigh_1.jpeg", "images/raleigh_2.jpeg", "images/raleigh_3.jpeg"]
+  },
+    {
+    lat:  36.008588768609144, lng: -78.92436029067815,
+    type: "been",
+    city: "Durham, NC",
+    title: "Duke University, our first home",
+    date: "March 18th, 2024",
+    text: "I made our anniversary the date for this pin, because I believe that is the day when we found a home together (well, I guess you we're living there for a bit before me LOL). Berk9 was our safe space. Our gg snuggle spot. Our cook nights and pool hangouts. Beyond your apartment, Duke and Durham were our collective homes: baseball games, hikes in the summer, amazing food, the farmer's market - not to mention the people that we've become while at Duke together. I am so proud of how your intellectual journey here, and watching you carve out your passion for doc studies through your senior capstone in the Spring! I love you baby.",
+    photos: ["images/durham_1.jpeg", "images/durham_2.jpeg", "images/durham_3.JPG", "images/durham_4.jpeg"]
+  },
+
+      {
+    lat:  29.31601470006451, lng: 110.43502399319857,
+    type: "visit",
+    city: "Hunan Province, China",
+    title: "Zhangjiajie National Forest Park",
+    text: "It's literally a scene from Avatar!",
+    photos: ["images/china.jpg"]
+  },
+  {
+    lat:  -34.60327988374596, lng: -58.393493946731496,
+    type: "visit",
+    city: "South America",
+    title: "Buenos Aires, Argentina",
+    text: "Seeing South America and it's wonderful cities sounds perfect. Plus all the insane hiking like your parents did in Patagonia!",
+    photos: ["images/buenos_aires.jpg"]
+  },
+  {
+    lat:  -42.59153931210184, lng: 171.73299299482684,
+    type: "live",
+    city: "New Zealand",
+    title: "Self-sufficient Paradise",
+    text: "A few months ago, you sent me this picture, and it made me think: what else could we possibly need? To me, this paradise is giving coastal New Zealand, but you know better than me. I would LOVE to live in this paradise with you forever!",
+    photos: ["images/nz.jpg"]
+  },
+    {
+    lat: 32.84882660237933, lng: -117.27024141057223,
+    type: "been",
+    city: "San Diego, CA",
+    title: "La Jolla Valentines Weekend Trip",
+    date: "February 14th, 2026",
+    text: "Ah, what a lovely weekend! Our little house right by the La Jolla shores was so perfect, and I will always be grateful for getting to share our love for one another this weekend. Whether it was running to the beach, enjoying a beautiful sunset by the cliffs, or even just watching Mike and Dave need wedding dates, I loved this temporary halt to long distance :( ",
+    photos: ["images/sd_1.jpeg", "images/sd_2.jpeg", "images/sd_3.jpg"]
+  },
+
+  {
+    lat:   30.26636271032866, lng: -97.75838945118524,
+    type: "live",
+    city: "Austin, TX",
+    title: "ATX",
+    text: "While there is a TON wrong with Texas, I think we are both very attracted to these ATX vibes. It speaks to us: happy, healthy, and around good people who want to do the same! I'm hoping that wherever we live in our 20's, we'll get some of these good vibes :) ",
+    photos: ["images/atx.jpg"]
+  },
+      {
+    lat: 37.861961101372096, lng: -122.57748437345187,
+    type: "been",
+    city: "Muir Beach, CA",
+    title: "San Francisco for the Fourth!",
+    date: "July 4th, 2025",
+    text: "Baby, this was PEAK and we both know it - a cute lovely little shack along the beautiful cliffs of the California coast? Doesn't get much better than that. I remember we did that mini hike up the mountain on the first day and we were just like 'yeah we need to live here one day', and I don't think either of us have changed our minds too much on that! Thank you for an amazing trip there, Ella. I am so grateful for being able to meet up at this wonderful halfway point. (p.s. I cannot BELIEVE we didn't get hit by a car when we had no choice but to walk along the road in the dark as cars whizzed by LOLOLOL)",
+    photos: ["images/sf_1.jpeg", "images/sf_2.jpeg", "images/sf_3.jpeg"]
+  },
+
+        {
+    lat: 36.910592077842516, lng: -76.290207104767,
+    type: "been",
+    city: "Norfolk, VA",
+    title: "The coolest NA girl I know!",
+    text: "Going to your hometown is always such a treat for me. Going to Taste (yummmm), paddle boarding, biking around downtown, or even throwing the football around in your backyard, I love seeing you happy in the place that shaped you into the amazing person you are today. Crazy invisible string that one of my distant relatives from almost a century ago arrived in Norfolk!",
+    photos: ["images/nf_1.jpeg", "images/nf_2.jpeg", "images/nf_3.jpeg"]
+  },
+
+          {
+    lat: 21.362813293878034, lng: -158.0797260435495,
+    type: "been",
+    city: "Oahu, HI",
+    title: "Your (faraway) home!",
+    text: "I know distance has been hard baby, but this truly is your second home, and I am so so grateful that I have been able to visit you there! I think we can both agree that when we are in our element there - as in hiking, snorkeling (and finding turtles that resemble us), eating grindzzz, practicing yoga - life is (literally) peak. I love living life with you there and digging into our rugged, adventurous sides. I believe it builds trust and extends our love - think back to chinaman's hat as well as that super risky evening hike! Crazy. Anyways, I love living life to the max with you :)",
+    photos: ["images/hi_1.jpeg", "images/hi_2.jpeg", "images/hi_3.jpeg"]
+  },
+
+            {
+    lat: 37.26850363254694, lng: -76.65608734133626,
+    type: "been",
+    city: "Williamsburg, VA",
+    title: "Busch Gardens",
+    date: "June 2nd, 2024",
+    text: "Another silly day with you I'll never forget. Fast roller coasters, ice cream, silly jokes and WAY too much pda? Sign me up!",
+    photos: ["images/bg_1.jpeg", "images/bg_2.jpg", "images/bg_3.jpeg"]
+  },
+
+  {
+    lat:   40.707404041569035, lng: -74.01231242468648,
+    type: "been",
+    city: "New York, NY",
+    title: "My home is your home!",
+    text: "I love exploring the city with you and feeling like a kid again in my own city! Chinatown, the MET, Central Park, new years parties and bars (LOL)... I love bonding with you in the place where it all started for me; mi casa es su casa! ",
+    photos: ["images/ny_1.jpeg", "images/ny_2.jpeg", "images/ny_3.jpeg"]
+  },
+
+    {
+  lat: 48.86118806749514, lng: 2.3584234830272175,  
+    type: "been",
+    city: "Paris, France",
+    title: "Our beautiful Le Marais pied-à-terre",
+    date: "November 22nd, 2024",
+    text: "What. A. Trip! That cozy little apartment in Le Marais was so perfect, and exploring the city of love with you was truly unforgettable. My favorite moment from the trip was holding you close one evening as we had a perfect view of the Eiffel Tower with music playing in the background... so perfect.",
+    photos: ["images/paris_1.jpg", "images/paris_2.jpeg", "images/paris_3.jpeg"]
+  },
+
+        {
+  lat:35.79062213972073, lng: -83.55650507731501,  
+    type: "been",
+    city: "Pigeon Forge, TN",
+    title: "Away Formal 2025!",
+    date: "March 28th, 2025",
+    text: "My favorite memory from this trip was our morning walk - so nice and peaceful to just enjoy each other's presence, and make a silly song (hearddddd LOL). Plus, having our own room together was awesome, despite Cole coming in every damn second haha. ",
+    photos: ["images/tn_1.jpeg", "images/tn_2.jpeg", "images/tn_3.jpeg"]
+  },
+
+
+          {
+  lat:  32.78700066209082,lng: -79.95453502075661,  
+    type: "live",
+    city: "Charleston, SC", 
+    title: "Chucktown Fourth!",
+    date: "July 4th, 2024",
+    text: "OMG, probably the most jam-packed trip ever - we did so much in only a day! But what a day to remember - biscuits, ice cream, boating, rainbow houses, date night, AND fireworks?! I'll never forget naming sparkling boy, and that beautiful conversation that followed on the swinging bench. I know it's not perfect, but I think we can both agree that living here for a bit would be SICK! ",
+    photos: ["images/ch_1.jpeg", "images/ch_2.jpeg", "images/ch_3.jpeg"]
+  },
+
+  {
+  lat:  14.726876639670767,  lng: 108.17407464437989,
+    type: "visit",
+    title: "Vietnam",
+    date: "Summer 2026?",
+    text: "Post-grad trip??! Would be sickkkkk",
+    photos: ["images/vt.jpg"]
+  },
+  {
+  lat:    -22.909924639373568, lng: -43.15498938696414,
+    type: "visit",
+    title: "Brazil",
+    text: "Never been to South America, but Brazil is at the top of my list!",
+    photos: ["images/brazil.jpg"]
+  }
+];
+// ══════════════════════════════════════════════════════════════
+
+// ── Init Map ──
+const map = L.map('map', {
+  center: [20, 10],
+  zoom: 2.5,
+  zoomControl: true,
+  minZoom: 2,
+  maxZoom: 16,
+  worldCopyJump: true
+});
+
+L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?language=en', {
+  attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+  maxZoom: 20
+}).addTo(map);
+
+// ── Modal + Slideshow logic ──
+const overlay        = document.getElementById('modal-overlay');
+const slideTrack     = document.getElementById('slide-track');
+const slidePrev      = document.getElementById('slide-prev');
+const slideNext      = document.getElementById('slide-next');
+const slideDotsWrap  = document.getElementById('slide-dots');
+const placeholder    = document.getElementById('modal-img-placeholder');
+
+let currentSlide = 0;
+let totalSlides  = 0;
+
+function goToSlide(n) {
+  currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+  slideTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+  slidePrev.classList.toggle('hidden', currentSlide === 0);
+  slideNext.classList.toggle('hidden', currentSlide === totalSlides - 1);
+  slideDotsWrap.querySelectorAll('.slide-dot').forEach((d, i) =>
+    d.classList.toggle('active', i === currentSlide)
+  );
+}
+
+function openModal(memory) {
+  document.getElementById('modal-location').textContent = memory.city;
+  document.getElementById('modal-title').textContent    = memory.title;
+  document.getElementById('modal-date').textContent     = memory.date;
+  document.getElementById('modal-text').textContent     = memory.text;
+
+  // normalise: accept single string OR array
+  const photos = Array.isArray(memory.photos)
+    ? memory.photos.filter(Boolean)
+    : (memory.photo ? [memory.photo] : []);
+
+  // clear previous
+  slideTrack.innerHTML = '';
+  slideDotsWrap.innerHTML = '';
+  currentSlide = 0;
+  totalSlides  = photos.length;
+
+  if (photos.length > 0) {
+    placeholder.style.display = 'none';
+    slideTrack.style.display  = 'flex';
+
+    photos.forEach((src, i) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'slide-img';
+      img.alt = `${memory.title} — photo ${i + 1}`;
+      slideTrack.appendChild(img);
+
+      if (photos.length > 1) {
+        const dot = document.createElement('div');
+        dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => goToSlide(i));
+        slideDotsWrap.appendChild(dot);
+      }
+    });
+
+    slidePrev.classList.toggle('hidden', photos.length <= 1);
+    slideNext.classList.add('hidden'); // start at first
+    goToSlide(0);
+  } else {
+    slideTrack.style.display  = 'none';
+    placeholder.style.display = 'flex';
+    slidePrev.classList.add('hidden');
+    slideNext.classList.add('hidden');
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeModal() { overlay.classList.remove('open'); }
+
+slidePrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+slideNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+document.getElementById('modal-close').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowLeft')  goToSlide(currentSlide - 1);
+  if (e.key === 'ArrowRight') goToSlide(currentSlide + 1);
+});
+
+// ── Custom Pin Icon ──
+function makePinIcon(type) {
+  const color = PIN_COLORS[type] || PIN_COLORS.been;
+  return L.divIcon({
+    className: '',
+    html: `<div class="memory-pin"><div class="pin-outer" style="--pin-color:${color}"><div class="pin-inner"></div></div></div>`,
+    iconSize: [28, 36],
+    iconAnchor: [14, 34],
+    popupAnchor: [0, -36]
+  });
+}
+
+// ── Place Pins ──
+memories.forEach(memory => {
+  const marker = L.marker([memory.lat, memory.lng], { icon: makePinIcon(memory.type) });
+  marker.addTo(map);
+  marker.on('click', () => openModal(memory));
+});
+
+document.getElementById('pin-count').textContent = memories.filter(m => m.type === 'been').length;
+</script>
+</body>
+</html>
