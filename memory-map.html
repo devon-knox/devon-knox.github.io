@@ -70,7 +70,7 @@
     font-family: 'EB Garamond', serif;
     font-style: italic;
     font-size: 13px;
-    color: rgba(173, 216, 230, 1);
+    color: rgba(245,240,232,0.45);
     margin-top: 5px;
     letter-spacing: 0.02em;
   }
@@ -455,9 +455,9 @@
 <body>
 
 <div id="header">
-  <div class="eyebrow">Happy Two Years Baby!</div>
-  <h1>Our Love, <em>Mapped</em></h1>
-  <div class="subtitle">I will always cherish the places we go; that's why I decided to give 'em some pins!</div>
+  <div class="eyebrow">Two Years Together</div>
+  <h1>Our Story, <em>Mapped</em></h1>
+  <div class="subtitle">Every place we have found each other</div>
 </div>
 
 <div id="map"></div>
@@ -479,11 +479,11 @@
   </div>
 </div>
 
-<!-- <div id="counter">
+<div id="counter">
   <div class="dot"></div>
   <span><strong id="pin-count">0</strong> places we've shared</span>
   <div class="dot"></div>
-</div> -->
+</div>
 
 <!-- MODAL -->
 <div id="modal-overlay">
@@ -697,8 +697,9 @@ const map = L.map('map', {
   worldCopyJump: true
 });
 
-L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?language=en', {
-  attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
   maxZoom: 20
 }).addTo(map);
 
